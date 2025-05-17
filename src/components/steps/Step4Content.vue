@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRestorationStore } from '@/store/restoration';
 import IconArrowLeft from '@/components/icons/IconArrowLeft.vue';
+import axios from 'axios';
 
 defineProps({
   goToPreviousStep: {
@@ -17,12 +18,12 @@ defineProps({
 const restorationStore = useRestorationStore();
 const isDragging = ref(false);
 const coverError = ref('');
+const submissionError = ref('');
 
-// Проверка файла обложки на формат и размер
 const validateCoverFile = (file) => {
   const maxSizeMB = 5;
-  const maxSizeBytes = maxSizeMB * 1024 * 1024; // 5 MB в байтах
-  const allowedType = 'image/png'; // MIME-тип для PNG
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  const allowedType = 'image/png';
 
   if (file.type !== allowedType) {
     return 'Файл должен быть в формате PNG.';
@@ -33,14 +34,12 @@ const validateCoverFile = (file) => {
   return '';
 };
 
-// Проверка, есть ли валидный файл обложки (опционально, так как обложка не обязательна)
 const hasValidCover = computed(() => {
-  return !restorationStore.coverUrl || !coverError.value; // Изменили с coverFile на coverUrl
+  return !restorationStore.coverUrl || !coverError.value;
 });
 
-const coverPreview = computed(() => restorationStore.coverUrl ? restorationStore.coverUrl : null); // Изменили с coverFile на coverUrl
+const coverPreview = computed(() => restorationStore.coverUrl ? restorationStore.coverUrl : null);
 
-// Следим за изменениями новых полей
 watch(() => restorationStore.title, (newTitle) => {
   restorationStore.setTitle(newTitle);
 });
@@ -74,9 +73,9 @@ const onDrop = (event) => {
     const file = files[0];
     coverError.value = validateCoverFile(file);
     if (!coverError.value) {
-      restorationStore.setCoverUrl(URL.createObjectURL(file)); // Изменили setCoverFile на setCoverUrl
+      restorationStore.setCoverUrl(URL.createObjectURL(file));
     } else {
-      restorationStore.setCoverUrl(null); // Изменили setCoverFile на setCoverUrl
+      restorationStore.setCoverUrl(null);
     }
   }
 };
@@ -86,16 +85,37 @@ const onCoverSelect = (event) => {
   if (file) {
     coverError.value = validateCoverFile(file);
     if (!coverError.value) {
-      restorationStore.setCoverUrl(URL.createObjectURL(file)); // Изменили setCoverFile на setCoverUrl
+      restorationStore.setCoverUrl(URL.createObjectURL(file));
     } else {
-      restorationStore.setCoverUrl(null); // Изменили setCoverFile на setCoverUrl
+      restorationStore.setCoverUrl(null);
     }
   }
 };
 
-const goToNext = () => {
+const goToNext = async () => {
   if (hasValidCover.value) {
-    restorationStore.setCurrentStep(5);
+    const metadata = {
+      trackId: restorationStore.trackId,
+      title: restorationStore.title || 'Unknown Title',
+      author: restorationStore.author || 'Unknown Artist',
+      year: restorationStore.year || '',
+      album: restorationStore.album || '',
+      country: restorationStore.country || '',
+      coverUrl: restorationStore.coverUrl || null,
+    };
+
+    try {
+      await axios.post('http://localhost:5000/restoration/metadata', metadata, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      restorationStore.setCurrentStep(5);
+    } catch (err) {
+      console.error('Failed to save metadata:', err);
+      submissionError.value = 'Не удалось сохранить метаданные. Попробуйте снова.';
+    }
   }
 };
 </script>
@@ -113,6 +133,9 @@ const goToNext = () => {
     </div>
     <h1 class="text-3xl font-bold text-light-text dark:text-dark-text mb-6">Редактирование метаданных</h1>
     <div class="bg-light-surface dark:bg-dark-surface p-6 rounded-lg shadow-lg w-full max-w-screen-lg">
+      <div v-if="submissionError" class="text-sm text-red-500 mb-4">
+        {{ submissionError }}
+      </div>
       <div class="flex flex-wrap justify-around">
         <div>
           <h2 class="text-xl mb-2 text-light-text dark:text-dark-text">Обложка</h2>
@@ -140,7 +163,7 @@ const goToNext = () => {
           <div v-if="coverError" class="mt-2 text-sm text-red-500">
             {{ coverError }}
           </div>
-          <div v-else-if="restorationStore.coverUrl" class="mt-2 text-sm text-gray-500 dark:text-gray-400"> <!-- Изменили с coverFile на coverUrl -->
+          <div v-else-if="restorationStore.coverUrl" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Файл выбран
           </div>
         </div>

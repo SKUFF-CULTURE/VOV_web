@@ -5,6 +5,7 @@ export const useRestorationStore = defineStore('restoration', {
   state: () => ({
     currentStep: 1,
     file: null,
+    trackId: null, // Храним только trackId
     title: '',
     author: '',
     year: '',
@@ -19,6 +20,9 @@ export const useRestorationStore = defineStore('restoration', {
     },
     setFile(file) {
       this.file = file;
+    },
+    setTrackId(trackId) {
+      this.trackId = trackId;
     },
     setTitle(title) {
       this.title = title;
@@ -74,6 +78,7 @@ export const useRestorationStore = defineStore('restoration', {
     reset() {
       this.currentStep = 1;
       this.file = null;
+      this.trackId = null;
       this.title = '';
       this.author = '';
       this.year = '';

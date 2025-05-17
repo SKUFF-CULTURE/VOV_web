@@ -1,7 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRestorationStore } from '@/store/restoration';
+import { useAuthStore } from '@/store/auth';
 import IconArrowLeft from '@/components/icons/IconArrowLeft.vue';
+import axios from 'axios';
 
 defineProps({
   goToPreviousStep: {
@@ -15,8 +17,13 @@ defineProps({
 });
 
 const restorationStore = useRestorationStore();
+const authStore = useAuthStore();
 const isDragging = ref(false);
 const fileError = ref('');
+
+onMounted(async () => {
+  await authStore.initialize(); // Инициализация authStore
+});
 
 const validateFiles = (files) => {
   const maxSizeMB = 70;
@@ -78,14 +85,28 @@ const onFileSelect = async (event) => {
 };
 
 const uploadFiles = async () => {
+  if (!authStore.user || !authStore.user.id) {
+    fileError.value = 'Пользователь не авторизован. Пожалуйста, войдите в систему.';
+    return;
+  }
+
   if (hasValidFile.value) {
     const formData = new FormData();
     formData.append('file', restorationStore.file);
+    formData.append('userId', authStore.user.id); // Используем user.id
+
     try {
-      console.log('Uploading file:', restorationStore.file);
+      const response = await axios.post('http://localhost:5000/restoration/upload', formData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      restorationStore.setTrackId(response.data.id);
       restorationStore.setCurrentStep(3);
     } catch (err) {
       console.error('Upload failed:', err);
+      fileError.value = 'Не удалось загрузить файл. Попробуйте снова.';
     }
   }
 };

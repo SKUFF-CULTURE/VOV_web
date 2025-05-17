@@ -1,7 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRestorationStore } from '@/store/restoration';
+import { useAuthStore } from '@/store/auth';
 import IconArrowLeft from '@/components/icons/IconArrowLeft.vue';
+import axios from 'axios';
 
 defineProps({
   goToPreviousStep: {
@@ -15,6 +17,13 @@ defineProps({
 });
 
 const restorationStore = useRestorationStore();
+const authStore = useAuthStore();
+const error = ref('');
+
+onMounted(async () => {
+  await authStore.initialize(); // Инициализация authStore
+  fetchRestoredAudioUrl();
+});
 
 const metadata = computed(() => ({
   title: restorationStore.title || 'Sample Title',
@@ -26,12 +35,53 @@ const metadata = computed(() => ({
   restoredAudioUrl: restorationStore.restoredAudioUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
 }));
 
-const downloadAudio = () => {
-  console.log('Downloading', metadata.value.restoredAudioUrl);
+const fetchRestoredAudioUrl = async () => {
+  try {
+    const response = await axios.get(`http://localhost:5000/restoration/download/${restorationStore.trackId}?version=original`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+      },
+      params: {
+        version: 'processed',
+      },
+    });
+    console.log(response.data.url)
+    restorationStore.setRestoredAudioUrl(response.data.url);
+  } catch (err) {
+    console.error('Failed to fetch restored audio URL:', err);
+    error.value = 'Не удалось загрузить трек.';
+  }
 };
 
-const addToCollection = () => {
-  console.log('Adding to collection:', metadata.value);
+const addToCollection = async () => {
+  if (!authStore.user || !authStore.user.id) {
+    error.value = 'Пользователь не авторизован. Пожалуйста, войдите в систему.';
+    return;
+  }
+
+  try {
+    await axios.post('http://localhost:5000/users/library', {
+      userId: parseInt(authStore.user.id), // Используем user.id
+      trackId: restorationStore.trackId,
+    }, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    alert('Трек добавлен в вашу коллекцию!');
+  } catch (err) {
+    console.error('Failed to add to collection:', err);
+    error.value = 'Не удалось добавить трек в коллекцию.';
+  }
+};
+
+const downloadAudio = async () => {
+  if (restorationStore.restoredAudioUrl) {
+    window.open(restorationStore.restoredAudioUrl, '_blank');
+  } else {
+    error.value = 'URL трека недоступен.';
+  }
 };
 
 const restart = () => {
@@ -52,6 +102,9 @@ const restart = () => {
     </div>
     <h1 class="text-3xl font-bold text-light-text dark:text-dark-text mb-6">Реставрация завершена</h1>
     <div class="bg-light-surface dark:bg-dark-surface p-6 rounded-lg shadow-lg w-full max-w-md text-left">
+      <div v-if="error" class="text-sm text-red-500 mb-4">
+        {{ error }}
+      </div>
       <div class="flex flex-wrap justify-around mb-4">
         <img :src="metadata.cover" alt="Cover" class="w-32 h-32 rounded" />
         <div class="flex flex-col text-left justify-center">
