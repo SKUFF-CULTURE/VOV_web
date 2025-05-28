@@ -110,7 +110,7 @@ export const trackService = {
   getStreamUrl(trackId, version = 'processed') {
     // Используем baseURL из api
     const baseURL = api.defaults.baseURL || 'http://localhost:5000'; // Фолбэк на случай, если baseURL не задан
-    return `${baseURL}/restoration/stream/${trackId}?version=${version}`;
+    return `${baseURL}restoration/stream/${trackId}?version=${version}`;
   },
 
   async getDownloadUrl(trackId, version = 'processed') {
