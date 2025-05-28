@@ -4,7 +4,7 @@ import api from '@/services/api';
 
 export const startLogin = (provider) => {
   const baseURL = api.defaults.baseURL || 'http://localhost:5000';
-  const authUrl = `${baseURL}/auth/${provider}`; // Формируем URL для провайдера
+  const authUrl = `${baseURL}auth/${provider}`; // Формируем URL для провайдера
   window.location.href = authUrl;
 };
 
