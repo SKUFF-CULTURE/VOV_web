@@ -1,0 +1,24 @@
+# Dockerfile.frontend
+# ── Stage 1: билдим Vite/Vue ───────────────
+FROM node:24-alpine AS builder
+WORKDIR /app
+
+# копируем фронт-пакеты из VOV_web
+COPY VOV_web/package*.json ./
+RUN npm ci
+
+COPY VOV_web/ ./
+RUN npm run build      # соберёт dist в /app/dist
+
+# ── Stage 2: nginx отдаёт готовый билд ─────
+FROM nginx:stable-alpine
+
+# Копируем ваш конфиг nginx
+# Исходный: ~/Le_view/VOV_backend/nginx/nginx.conf
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Копируем собранный фронт в корень html
+COPY --from=builder /app/dist/ /usr/share/nginx/html/
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
