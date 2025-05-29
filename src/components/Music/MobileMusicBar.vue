@@ -292,7 +292,7 @@
             :secondary-color="secondaryColor"
             @close="showQueueOverlay = false"
         />
-        <LyricsOverlay
+        <MobileLyricsOverlay
             v-if="showLyricsOverlay"
             :dominant-color="dominantColor"
             :secondary-color="secondaryColor"
@@ -305,7 +305,7 @@
 
 <script setup>
 import QueueOverlay from '@/components/Music/QueueOverlay.vue';
-import LyricsOverlay from '@/components/Music/LyricsOverlay.vue';
+import MobileLyricsOverlay from '@/components/Music/MobileLyricsOverlay.vue';
 import { ref, computed, watch, nextTick } from 'vue';
 import { usePlayerStore } from '@/store/player';
 import { useTrackStore } from '@/store/track';
@@ -510,27 +510,45 @@ function onTouchStart(e) {
   touchStartY.value = e.touches[0].clientY;
   touchCurrentY.value = touchStartY.value;
   isSwiping.value = true;
+  // Отключаем transition во время свайпа
+  e.currentTarget.style.transition = 'none';
 }
 
 function onTouchMove(e) {
   if (!isSwiping.value || showQueueOverlay.value || showLyricsOverlay.value) return;
   touchCurrentY.value = e.touches[0].clientY;
   const deltaY = touchCurrentY.value - touchStartY.value;
+
+  // Разрешаем только свайп вниз
   if (deltaY > 0) {
     e.currentTarget.style.transform = `translateY(${deltaY}px)`;
     e.currentTarget.style.opacity = 1 - Math.min(deltaY / 300, 1);
   }
+
+  // Отменяем событие прокрутки страницы
+  e.preventDefault();
 }
 
 function onTouchEnd(e) {
   if (!isSwiping.value || showQueueOverlay.value || showLyricsOverlay.value) return;
   const deltaY = touchCurrentY.value - touchStartY.value;
+
+  // Включаем transition обратно
+  e.currentTarget.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+
   if (deltaY > 100) {
+    // Если свайп достаточный, закрываем сразу
     isFullscreen.value = false;
+    // Сбрасываем transform
+    e.currentTarget.style.transform = '';
+    e.currentTarget.style.opacity = '';
+  } else {
+    // Если свайп недостаточный, плавно возвращаем на место
+    e.currentTarget.style.transform = '';
+    e.currentTarget.style.opacity = '';
   }
+
   isSwiping.value = false;
-  e.currentTarget.style.transform = '';
-  e.currentTarget.style.opacity = '';
 }
 
 // Swipe handling for track covers
@@ -676,10 +694,15 @@ input[type="range"]::-moz-range-progress {
 
 .slide-up-enter-active,
 .slide-up-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.5, 1),
+  opacity 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
 }
 
-.slide-up-enter-from,
+.slide-up-enter-from {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
 .slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
@@ -715,5 +738,10 @@ input[type="range"]::-moz-range-progress {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.fixed.inset-0.z-150.flex.flex-col.pt-16.px-4 {
+  will-change: transform, opacity; /* Улучшает производительность анимации */
+  touch-action: pan-y; /* Разрешаем только вертикальные свайпы */
 }
 </style>

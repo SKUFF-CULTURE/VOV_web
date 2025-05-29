@@ -1,3 +1,4 @@
+// src/store/track.js
 import { defineStore } from 'pinia';
 import { trackService } from '@/services/trackService';
 import { useAuthStore } from '@/store/auth';
@@ -16,18 +17,26 @@ export const useTrackStore = defineStore('track', {
   }),
 
   actions: {
+    // Загрузка топовых треков по прослушиваниям
     async fetchTopPlays(limit = 10) {
       this.topPlays = await trackService.getTopPlays(limit);
     },
 
+    // Загрузка топовых треков по лайкам
     async fetchTopLikes(limit = 10) {
       this.topLikes = await trackService.getTopLikes(limit);
     },
 
-    async fetchNewTracks(limit = 10) {
-      this.newTracks = await trackService.getNewTracks(limit);
+    // Загрузка новых треков (с тегами или без)
+    async fetchNewTracks(limit = 10, tags = []) {
+      if (tags.length > 0) {
+        this.newTracks = await trackService.getNewTracksByTags(tags, limit);
+      } else {
+        this.newTracks = await trackService.getNewTracks(limit);
+      }
     },
 
+    // Загрузка публичных треков (топ прослушивания, лайки, новые)
     async fetchPublicTracks(limit = 10) {
       const [a, b, c] = await Promise.all([
         trackService.getTopPlays(limit),
@@ -39,12 +48,18 @@ export const useTrackStore = defineStore('track', {
       this.newTracks = c;
     },
 
-    async fetchUserLibrary() {
+    // Загрузка коллекции пользователя (с тегами или без)
+    async fetchUserLibrary(tags = []) {
       const auth = useAuthStore();
       if (!auth.userId) return;
-      this.userLibrary = await trackService.getUserLibrary(auth.userId);
+      if (tags.length > 0) {
+        this.userLibrary = await trackService.getUserLibraryByTags(auth.userId, tags);
+      } else {
+        this.userLibrary = await trackService.getUserLibrary(auth.userId);
+      }
     },
 
+    // Поиск треков
     async searchTracks(query, from = 0, size = 10, sort = 'relevance') {
       try {
         const auth = useAuthStore();
@@ -62,6 +77,7 @@ export const useTrackStore = defineStore('track', {
       }
     },
 
+    // Добавление трека в коллекцию
     async addToLibrary(trackId) {
       const auth = useAuthStore();
       if (!auth.userId) throw new Error('Not logged in');
@@ -81,6 +97,7 @@ export const useTrackStore = defineStore('track', {
       }
     },
 
+    // Удаление трека из коллекции
     async removeFromLibrary(trackId) {
       const auth = useAuthStore();
       if (!auth.userId) throw new Error('Not logged in');
@@ -95,6 +112,7 @@ export const useTrackStore = defineStore('track', {
       }
     },
 
+    // Жалоба на трек
     async reportTrack(trackId) {
       const auth = useAuthStore();
       if (!auth.userId) throw new Error('Not logged in');
@@ -106,10 +124,12 @@ export const useTrackStore = defineStore('track', {
       }
     },
 
+    // Воспроизведение трека
     async playTrack(trackId) {
       await usePlayerStore().playTrack(trackId);
     },
 
+    // Остановка трека
     stopTrack() {
       usePlayerStore().pause();
     },

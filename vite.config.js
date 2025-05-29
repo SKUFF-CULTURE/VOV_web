@@ -55,7 +55,7 @@ export default defineConfig(({ command }) => {
                     // сразу активировать и взять под контроль страницы
           skipWaiting: true,
           clientsClaim: true,
-          
+
 
 
           runtimeCaching: [
@@ -74,7 +74,7 @@ export default defineConfig(({ command }) => {
               urlPattern: /\.(?:js|css)$/,
               handler: 'StaleWhileRevalidate',
               options: { cacheName: 'assets'}
-              
+
             },
             {
               urlPattern: /\.(?:mp3|wav|ogg)$/,

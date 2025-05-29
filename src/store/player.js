@@ -1,4 +1,3 @@
-
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { useTrackStore } from '@/store/track';
@@ -23,6 +22,7 @@ export const usePlayerStore = defineStore('player', () => {
     const isMuted = ref(false);
     const bufferedProgress = ref(0);
     const isDarkMode = ref(false);
+    const currentLyrics = ref([]); // Хранилище для текста текущей песни
 
     // Cache tracks to avoid repeated searches
     const trackMap = computed(() => {
@@ -196,6 +196,15 @@ export const usePlayerStore = defineStore('player', () => {
         if (skipQueueOnPlay.value) customQueue.value = [];
     }
 
+    async function fetchTrackLyrics(trackId) {
+        try {
+            currentLyrics.value = await trackService.getTrackLyrics(trackId);
+        } catch (error) {
+            console.error('Ошибка при загрузке текста песни:', error);
+            currentLyrics.value = [];
+        }
+    }
+
     async function setCurrent(trackId) {
         if (
             currentTrackId.value === trackId &&
@@ -205,6 +214,7 @@ export const usePlayerStore = defineStore('player', () => {
         }
 
         currentTrackId.value = trackId;
+        await fetchTrackLyrics(trackId); // Загружаем текст песни
         await nextTick();
         if (audioElement.value) {
             try {
@@ -294,7 +304,7 @@ export const usePlayerStore = defineStore('player', () => {
             if (currentTrackId.value && currentTrack.value) {
                 recentTracks.value.push({
                     trackId: currentTrackId.value,
-                    metadata: { ...currentTrack.value, streamUrl: undefined }
+                    metadata: { ...currentTrack.value, streamUrl: undefined },
                 });
                 if (recentTracks.value.length > 5) {
                     recentTracks.value.shift();
@@ -324,7 +334,7 @@ export const usePlayerStore = defineStore('player', () => {
                 if (currentTrackId.value && currentTrack.value) {
                     futureTracks.value.push({
                         trackId: currentTrackId.value,
-                        metadata: { ...currentTrack.value, streamUrl: undefined }
+                        metadata: { ...currentTrack.value, streamUrl: undefined },
                     });
                     if (futureTracks.value.length > 5) {
                         futureTracks.value.shift();
@@ -335,6 +345,10 @@ export const usePlayerStore = defineStore('player', () => {
         } else if (audioElement.value) {
             audioElement.value.currentTime = 0;
         }
+    }
+
+    function clearLyrics() {
+        currentLyrics.value = [];
     }
 
     function toggleLoopMode() {
@@ -371,6 +385,7 @@ export const usePlayerStore = defineStore('player', () => {
         futureTracks.value = [];
         currentTrackId.value = null;
         isPlaying.value = false;
+        clearLyrics(); // Очищаем текст при очистке очереди
         if (audioElement.value) audioElement.value.src = '';
     }
 
@@ -447,6 +462,7 @@ export const usePlayerStore = defineStore('player', () => {
         isMuted,
         bufferedProgress,
         isDarkMode,
+        currentLyrics, // Экспортируем текст песни
         setAudioElement,
         loadBaseQueueFrom,
         moveInBaseQueue,
@@ -466,5 +482,7 @@ export const usePlayerStore = defineStore('player', () => {
         updateVolume,
         toggleMute,
         seek,
+        fetchTrackLyrics, // Экспортируем метод загрузки текста
+        clearLyrics, // Экспортируем метод очистки текста
     };
 });

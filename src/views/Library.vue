@@ -26,7 +26,7 @@
               @add-to-queue="addToQueue"
               @play-track="playTrack"
               @toggle-play="togglePlay"
-              @add-next="addToNext"
+              @add-next="addNext"
             />
           </div>
           <!-- Pagination -->
@@ -77,7 +77,7 @@
                 @add-to-queue="addToQueue"
                 @play-track="playTrack"
                 @toggle-play="togglePlay"
-                @add-next="addToNext"
+                @add-next="addNext"
               />
             </div>
           </div>
@@ -85,8 +85,25 @@
 
         <!-- Новые треки -->
         <div class="mt-8">
-          <h3 class="text-lg mb-4">Новые треки</h3>
-          <div class="flex flex-col space-y-2 pb-16 ">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg">Новые треки</h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="tag in availableTags"
+                :key="tag"
+                @click="toggleTag(tag)"
+                :class="[
+                  'px-3 py-1 rounded-full text-sm',
+                  selectedTags.includes(tag)
+                    ? 'bg-light-primary dark:bg-dark-primary text-dark-text'
+                    : 'bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text'
+                ]"
+              >
+                {{ tag }}
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-col space-y-2 pb-16">
             <TrackRow
               v-for="t in trackStore.newTracks"
               :key="t.trackId"
@@ -97,7 +114,7 @@
               @add-to-queue="addToQueue"
               @play-track="playTrack"
               @toggle-play="togglePlay"
-              @add-next="addToNext"
+              @add-next="addNext"
             />
           </div>
         </div>
@@ -125,6 +142,10 @@
   // Поисковый запрос и состояние поиска
   const searchQuery = ref('');
   const isSearching = ref(false);
+
+  // Теги для новых треков
+  const availableTags = ['Sad', 'Heroic', 'Positive', 'Depressive', 'Patriotic', 'Victorious', 'Lyrical'];
+  const selectedTags = ref([]);
 
   const handleSearch = debounce(async (query) => {
     if (query && query.trim()) {
@@ -223,6 +244,20 @@
 
   const togglePlay = trackId => {
     playerStore.togglePlay(trackId);
+  };
+
+  const toggleTag = async (tag) => {
+    if (selectedTags.value.includes(tag)) {
+      selectedTags.value = selectedTags.value.filter(t => t !== tag);
+    } else {
+      selectedTags.value = [...selectedTags.value, tag];
+    }
+    try {
+      await trackStore.fetchNewTracks(10, selectedTags.value);
+    } catch (err) {
+      console.error('Ошибка загрузки треков по тегам:', err);
+      toast.error('Не удалось загрузить треки по тегам');
+    }
   };
   </script>
 

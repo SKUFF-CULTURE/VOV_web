@@ -145,7 +145,7 @@ const goToNext = async () => {
 </script>
 
 <template>
-  <div class="relative flex flex-col items-center justify-center pb-16">
+  <div class="relative flex flex-col items-center justify-center pb-16 pt-16">
     <div class="flex justify-start w-full max-w-screen-lg mb-4">
       <button
         v-if="showBackButton"

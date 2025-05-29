@@ -52,43 +52,50 @@
       <!-- Custom queue -->
       <div v-if="customTracks.length" class="mb-4">
         <h3 class="text-sm font-semibold text-gray-200 mb-2">Добавлено мной</h3>
-        <draggable
-            v-model="customTracks"
-            item-key="trackId"
-            tag="ul"
-            class="space-y-2"
-            :animation="0"
-            :group="'queue'"
-            :force-fallback="true"
-            ghost-class="ghost"
-            chosen-class="chosen"
-            v-if="customTracks.length"
-            @start="onDragStart"
-            @end="onDragEnd"
-        >
-          <template #item="{ element: track, index: idx }">
-            <li
-                :key="track.trackId"
-                class="flex items-center p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-move draggable-item relative"
-                :class="{
-                  'ring-2 ring-light-primary dark:ring-dark-primary': isCurrentPlaying(track) || selectedTrackId === track.trackId,
-                  'bg-white/15': selectedTrackId === track.trackId,
-                  'z-10': isDragging && selectedTrackId === track.trackId,
-                }"
-                @touchstart="startTrackSelection($event, track.trackId)"
-                @touchend="endTrackSelection"
-                @click="handleTrackClick(track)"
-            >
-              <span class="w-5 text-xs text-gray-300 mr-1">{{ idx + 1 }}</span>
-              <img
-                  :src="track.coverUrl || 'https://via.placeholder.com/32'"
-                  class="w-8 h-8 rounded mr-3 object-cover"
-                  alt="Cover"
-              />
-              <div class="flex-1">
-                <p class="text-sm text-white truncate">{{ track.title || 'Неизвестный трек' }}</p>
-                <p class="text-xs text-gray-300 truncate">{{ track.author || 'Неизвестный автор' }}</p>
-              </div>
+        <div class="grid grid-cols-[1fr,auto] gap-2 items-center space-y-2">
+          <draggable
+              v-model="customTracks"
+              item-key="trackId"
+              tag="ul"
+              class="space-y-2 col-span-1"
+              :animation="0"
+              :group="'queue'"
+              :force-fallback="true"
+              ghost-class="ghost"
+              chosen-class="chosen"
+              v-if="customTracks.length"
+              @start="onDragStart"
+              @end="onDragEnd"
+          >
+            <template #item="{ element: track, index: idx }">
+              <li
+                  :key="track.trackId"
+                  class="flex items-center p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-move draggable-item relative"
+                  :class="{
+                    'ring-2 ring-light-primary dark:ring-dark-primary': isCurrentPlaying(track) || selectedTrackId === track.trackId,
+                    'bg-white/15': selectedTrackId === track.trackId,
+                    'z-10': isDragging && selectedTrackId === track.trackId,
+                  }"
+                  @touchstart="startTrackSelection($event, track.trackId)"
+                  @touchend="endTrackSelection"
+                  @click="handleTrackClick(track)"
+              >
+                <span class="w-5 text-xs text-gray-300 mr-1">{{ idx + 1 }}</span>
+                <img
+                    :src="track.coverUrl || 'https://via.placeholder.com/32'"
+                    class="w-8 h-8 rounded mr-3 object-cover"
+                    alt="Cover"
+                />
+                <div class="flex-1">
+                  <p class="text-sm text-white truncate">{{ track.title || 'Неизвестный трек' }}</p>
+                  <p class="text-xs text-gray-300 truncate">{{ track.author || 'Неизвестный автор' }}</p>
+                </div>
+              </li>
+            </template>
+          </draggable>
+          <!-- Buttons for custom tracks -->
+          <ul class="space-y-2 col-span-1">
+            <li v-for="track in customTracks" :key="track.trackId" class="flex items-center h-[60px]">
               <button
                   @click.stop="handlePlayClick(track)"
                   class="text-white hover:scale-110 active:scale-95 transition-transform duration-200"
@@ -96,54 +103,66 @@
                 <component :is="isCurrentPlaying(track) ? PauseIcon : PlayIcon" class="h-5 w-5"/>
               </button>
             </li>
-          </template>
-        </draggable>
+          </ul>
+        </div>
       </div>
 
       <!-- Upcoming queue -->
       <div v-if="upcomingTracks.length" class="mb-4">
         <h3 class="text-sm font-semibold text-gray-200 mb-2">Далее в очереди</h3>
-        <draggable
-            v-model="upcomingTracks"
-            item-key="trackId"
-            tag="ul"
-            class="space-y-2"
-            :animation="0"
-            :group="'queue'"
-            :force-fallback="true"
-            ghost-class="ghost"
-            chosen-class="chosen"
-            v-if="upcomingTracks.length"
-            @start="onDragStart"
-            @end="onDragEnd"
-        >
-          <template #item="{ element: track, index: idx }">
-            <li
-                :key="track.trackId"
-                class="flex items-center p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-move draggable-item relative"
-                :class="{
-                  'ring-2 ring-light-primary dark:ring-dark-primary': isCurrentPlaying(track) || selectedTrackId === track.trackId,
-                  'bg-white/15': selectedTrackId === track.trackId,
-                  'z-10': isDragging && selectedTrackId === track.trackId,
-                }"
-                @touchstart="startTrackSelection($event, track.trackId)"
-                @touchend="endTrackSelection"
-                @click="handleTrackClick(track)"
-            >
-              <span class="w-5 text-xs text-gray-300 mr-1">{{ idx + 1 }}</span>
-              <img
-                  :src="track.coverUrl || 'https://via.placeholder.com/32'"
-                  class="w-8 h-8 rounded mr-3 object-cover"
-                  alt="Cover"
-              />
-              <div class="flex-1">
-                <p class="text-sm text-white truncate">{{ track.title || 'Неизвестный трек' }}</p>
-                <p class="text-xs text-gray-300 truncate">{{ track.author || 'Неизвестный автор' }}</p>
-              </div>
-              <Bars3Icon class="h-5 w-5 stroke-white"/>
+        <div class="grid grid-cols-[1fr,auto] gap-2 items-center space-y-2">
+          <draggable
+              v-model="upcomingTracks"
+              item-key="trackId"
+              tag="ul"
+              class="space-y-2 col-span-1"
+              :animation="0"
+              :group="'queue'"
+              :force-fallback="true"
+              ghost-class="ghost"
+              chosen-class="chosen"
+              v-if="upcomingTracks.length"
+              @start="onDragStart"
+              @end="onDragEnd"
+          >
+            <template #item="{ element: track, index: idx }">
+              <li
+                  :key="track.trackId"
+                  class="flex items-center p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-move draggable-item relative"
+                  :class="{
+                    'ring-2 ring-light-primary dark:ring-dark-primary': isCurrentPlaying(track) || selectedTrackId === track.trackId,
+                    'bg-white/15': selectedTrackId === track.trackId,
+                    'z-10': isDragging && selectedTrackId === track.trackId,
+                  }"
+                  @touchstart="startTrackSelection($event, track.trackId)"
+                  @touchend="endTrackSelection"
+                  @click="handleTrackClick(track)"
+              >
+                <span class="w-5 text-xs text-gray-300 mr-1">{{ idx + 1 }}</span>
+                <img
+                    :src="track.coverUrl || 'https://via.placeholder.com/32'"
+                    class="w-8 h-8 rounded mr-3 object-cover"
+                    alt="Cover"
+                />
+                <div class="flex-1">
+                  <p class="text-sm text-white truncate">{{ track.title || 'Неизвестный трек' }}</p>
+                  <p class="text-xs text-gray-300 truncate">{{ track.author || 'Неизвестный автор' }}</p>
+                </div>
+              </li>
+            </template>
+          </draggable>
+          <!-- Buttons for upcoming tracks -->
+          <ul class="space-y-2 col-span-1">
+            <li v-for="track in upcomingTracks" :key="track.trackId" class="flex items-center h-[60px]">
+              <button
+                  @click.stop="handlePlayClick(track)"
+                  class="text-white hover:scale-110 active:scale-95 transition-transform duration-200"
+              >
+                <component :is="isCurrentPlaying(track) ? PauseIcon : PlayIcon" class="h-5 w-5"/>
+              </button>
             </li>
-          </template>
-        </draggable>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -168,7 +187,7 @@
 import { computed, defineProps, ref } from 'vue';
 import { usePlayerStore } from '@/store/player';
 import { useTrackStore } from '@/store/track';
-import { PlayIcon, PauseIcon, ChevronDownIcon, Bars3Icon } from '@heroicons/vue/24/outline';
+import { PlayIcon, PauseIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
 import { trackService } from '@/services/trackService';
 import draggable from 'vuedraggable';
 
@@ -429,6 +448,19 @@ function clearAll() {
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 4px;
+}
+
+/* Ensure buttons align with draggable items */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.grid ul {
+  margin: 0;
+}
+.grid li {
+  height: 60px; /* Match the height of draggable items */
 }
 </style>
 ```

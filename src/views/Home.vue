@@ -545,6 +545,8 @@ const images = [image1, image2];
   }
 
   #titles {
+    user-select: none; /* Запрещает выделение текста и элементов */
+    pointer-events: none;
     position: absolute;
     /* width: 63rem;
     height: 175rem; */

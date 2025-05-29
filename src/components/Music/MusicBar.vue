@@ -220,11 +220,13 @@
         <ArrowsPointingOutIcon class="w-5 h-5" />
       </button>
     </div>
+    <DesktopLyricsOverlay v-model:visible="showLyricsOverlay" />
   </div>
 </template>
 
 <script setup>
 import QueuePopOver from '@/components/Music/QueuePopOver.vue';
+import DesktopLyricsOverlay from '@/components/Music/DesktopLyricsOverlay.vue';
 import { ref, computed } from 'vue';
 import { usePlayerStore } from '@/store/player';
 import { useTrackStore } from '@/store/track';
@@ -265,6 +267,8 @@ const showReportTooltip = ref(false);
 const currentVersion = ref('processed');
 let tooltipTimeout = null;
 const defaultCover = 'src/assets/question-svg.svg';
+
+const showLyricsOverlay = ref(false);
 
 const currentTrack = computed(() => playerStore.currentTrack);
 const isInLibrary = computed(() =>
@@ -365,9 +369,7 @@ function onToggleQueue() {
   showQueue.value = !showQueue.value;
 }
 
-function onSpeechToText() {
-  /* TODO */
-}
+function onSpeechToText(){ showLyricsOverlay.value = true; }
 
 function onToggleFloat() {
   musicStore.toggleSidebar();

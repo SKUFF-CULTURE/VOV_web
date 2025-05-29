@@ -198,10 +198,10 @@ onUnmounted(() => {
 
     <!-- название / автор -->
     <div class="p-3">
-      <h3 class="text-light-text dark:text-dark-text text-base font-semibold truncate">
+      <h3 class="text-xs sm:text-base text-light-text dark:text-dark-text text-base font-semibold truncate">
         {{ props.track.title || 'Без названия' }}
       </h3>
-      <p class="text-light-text-muted dark:text-dark-text-muted text-sm truncate">
+      <p class="text-xs sm:text-xs text-light-text-muted dark:text-dark-text-muted text-sm truncate">
         {{ props.track.author || 'Неизвестный исполнитель' }}
         <span v-if="props.track.year"> – {{ props.track.year }}</span>
       </p>

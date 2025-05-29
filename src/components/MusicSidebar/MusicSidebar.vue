@@ -220,11 +220,12 @@
     <div class="mt-4 flex-1">
       <QueueSidebar />
     </div>
-
+    <DesktopLyricsOverlay v-model:visible="showLyricsOverlay" />
   </div>
 </template>
 
 <script setup>
+import DesktopLyricsOverlay from '@/components/Music/DesktopLyricsOverlay.vue';
 import { ref, computed } from 'vue';
 import { usePlayerStore } from '@/store/player.js';
 import { useTrackStore } from '@/store/track.js';
@@ -258,6 +259,7 @@ const defaultCover = 'src/assets/question-svg.svg';
 const showVolumeHint = ref(false);
 const showInfoTooltip = ref(false);
 const currentVersion = ref('processed');
+const showLyricsOverlay = ref(false);
 
 // Computed properties from playerStore
 const currentTrack = computed(() => playerStore.currentTrack);
@@ -322,9 +324,7 @@ function onToggleVersion() {
   currentVersion.value = currentVersion.value === 'processed' ? 'original' : 'processed';
 }
 
-function onSpeechToText() {
-  /* TODO */
-}
+function onSpeechToText(){ showLyricsOverlay.value = true; }
 
 function onUpdateVolume() {
   playerStore.updateVolume(volume.value);
