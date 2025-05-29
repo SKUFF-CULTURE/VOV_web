@@ -8,13 +8,13 @@ import { useAuthStore } from '@/store/auth';
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 // Nasrano
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    for (const reg of regs) {
-      reg.unregister();
-    }
-  });
-}
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker.getRegistrations().then(regs => {
+//     for (const reg of regs) {
+//       reg.unregister();
+//     }
+//   });
+// }
 
 const app = createApp(App)
 const pinia = createPinia()

@@ -41,16 +41,22 @@ export default defineConfig(({ command }) => {
           ]
         },
         workbox: {
-          // сразу активировать и взять под контроль страницы
-          skipWaiting: true,
-          clientsClaim: true,
+
 
           // SPA-фоллбэк
           navigateFallback: '/index.html',
           // не отдавать index.html вместо ассетов
           navigateFallbackDenylist: [
-            /\.(?:js|css|png|jpg|jpeg|svg|ico|json|webmanifest)$/
+            /^\/auth\//,    // любой путь /auth/… → НЕ отдаваться SW
+            /^\/api\//,     // если нужно, аналогично для API
+            /\.(?:js|css|png|jpe?g|svg|ico|webmanifest)$/
+
           ],
+                    // сразу активировать и взять под контроль страницы
+          skipWaiting: true,
+          clientsClaim: true,
+          
+
 
           runtimeCaching: [
             {
