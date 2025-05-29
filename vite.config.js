@@ -86,6 +86,17 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
     port: 5173,
+    strictPort: true,
+    // разрешить любые хосты (в режиме разработки)
+    // либо явно перечислить: ['frontend', 'localhost', 'голос-победы.рф']
+  allowedHosts: [
+    'frontend',
+    'localhost',
+    'голос-победы.рф',
+    'xn----btbege7aubbju0k.xn--p1ai'
+  ]
+
   },
 })
