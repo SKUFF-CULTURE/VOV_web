@@ -1,109 +1,96 @@
-import { fileURLToPath, URL } from 'node:url'
-
+// vite.config.js
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
-import {VitePWA} from "vite-plugin-pwa";
+import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath, URL } from 'node:url'
 
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    vue(),
-    vueDevTools(),
-    tailwindcss(),
-    VitePWA({
-      registerType: 'autoUpdate', // Автоматическое обновление сервис-воркера
-      devOptions: {
-        enabled: true // Включает PWA в режиме разработки (удобно для тестов)
-      },
-      includeAssets: ['favicon.ico', 'icons/icon-512x512.png', 'icons/apple-touch-icon.png'],
-      manifest: {
-        name: 'Голос победы', // Полное название приложения
-        short_name: 'Голос победы', // Короткое название для иконки на главном экране
-        description: 'Сервис для реставрации песен военного времени.',
-        theme_color: '#6366f1', // --color-light-primary (индиго) для светлой темы
-        background_color: '#fafafc', // --color-light-bg для светлой темы
-        display: 'standalone', // Полноэкранный режим без браузерной строки
-        scope: '/',
-        start_url: '/',
-        icons: [
-          {
-            src: 'icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'icons/apple-touch-icon.png', // Создайте эту иконку (180x180)
-            sizes: '180x180',
-            type: 'image/png',
-            purpose: 'apple touch icon'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallbackAllowlist: [/^\/callback/],
-        runtimeCaching: [
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|ico)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 дней
+  return {
+    base: '/',  // убедитесь, что у вас всегда абсолютные пути на /assets
+    plugins: [
+      vue(),
+      tailwindcss(),
+
+      // PWA плагин — всегда подключен, но в dev режиме будет молчать
+      VitePWA({
+        registerType: 'autoUpdate',
+        devOptions: {
+          enabled: false  // не инжектим SW в dev-сервер
+        },
+        manifestFilename: 'manifest.json', // браузер запросит именно manifest.json
+        includeAssets: [
+          'favicon.ico',
+          'icons/icon-512x512.png',
+          'icons/apple-touch-icon.png'
+        ],
+        manifest: {
+          name: 'Голос победы',
+          short_name: 'Голос победы',
+          description: 'Сервис для реставрации песен военного времени.',
+          theme_color: '#6366f1',
+          background_color: '#fafafc',
+          display: 'standalone',
+          scope: '/',
+          start_url: '/',
+          icons: [
+            { src: 'icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+            { src: 'icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'apple touch icon' }
+          ]
+        },
+        workbox: {
+          // сразу активировать и взять под контроль страницы
+          skipWaiting: true,
+          clientsClaim: true,
+
+          // SPA-фоллбэк
+          navigateFallback: '/index.html',
+          // не отдавать index.html вместо ассетов
+          navigateFallbackDenylist: [
+            /\.(?:js|css|png|jpg|jpeg|svg|ico|json|webmanifest)$/
+          ],
+
+          runtimeCaching: [
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|ico)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 30 * 24 * 60 * 60
+                },
+              }
+            },
+            {
+              urlPattern: /\.(?:js|css)$/,
+              handler: 'StaleWhileRevalidate',
+              options: { cacheName: 'assets'}
+              
+            },
+            {
+              urlPattern: /\.(?:mp3|wav|ogg)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'audio',
+                expiration: {
+                  maxEntries: 20,
+                  maxAgeSeconds: 30 * 24 * 60 * 60
+                },
               }
             }
-          },
-          {
-            urlPattern: /^https:\/\/.*\.(?:js|css)$/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'assets'
-            }
-          },
-          {
-            urlPattern: /\.(?:mp3|wav|ogg)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'audio',
-              expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 дней
-              }
-            }
-          }
-        ]
-      }
-    })
-
-
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+          ]
+        }
+      })
+    ],
+    resolve: {
+      alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
     },
-  },
-  server: {
-    host: '0.0.0.0',
-    port: 3000,
-    strictPort: true,
-    // разрешить любые хосты (в режиме разработки)
-    // либо явно перечислить: ['frontend', 'localhost', 'голос-победы.рф']
-  allowedHosts: [
-    'frontend',
-    'localhost',
-    'голос-победы.рф',
-    'xn----btbege7aubbju0k.xn--p1ai'
-  ]
 
-  },
-  build: {
-    rollupOptions: {
-      external: ['/js/jsmediatags.min.js'] // Исключаем jsmediatags
+    build: {
+      sourcemap: false
     }
   }
 })
